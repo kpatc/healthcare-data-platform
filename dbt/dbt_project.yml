@@ -1,0 +1,45 @@
+name: 'pulse_stack_project'
+version: '1.0.0'
+config-version: 2
+
+# This setting configures which "profile" dbt uses for this project.
+profile: 'pulse_stack'
+
+# These configurations specify where dbt should look for different types of files.
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# Configuring models
+models:
+  pulse_stack_project:
+    # Config applied to all models
+    +materialized: table
+    
+    # Config for the bronze layer (raw data)
+    bronze:
+      +materialized: view
+      +schema: bronze
+    
+    # Config for the silver layer (cleaned data)
+    silver:
+      +materialized: table
+      +schema: silver
+    
+    # Config for the gold layer (business logic)
+    gold:
+      +materialized: table
+      +schema: gold
+
+# Seeds configuration
+seeds:
+  pulse_stack_project:
+    +schema: seeds

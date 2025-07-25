@@ -1,0 +1,27 @@
+pulse_stack:
+  outputs:
+    dev:
+      type: postgres
+      host: postgres
+      user: admin
+      password: admin
+      port: 5432
+      dbname: healthcare
+      schema: public
+      threads: 4
+      keepalives_idle: 0
+      search_path: "public"
+    
+    prod:
+      type: postgres
+      host: postgres
+      user: admin
+      password: admin
+      port: 5432
+      dbname: healthcare
+      schema: public
+      threads: 8
+      keepalives_idle: 0
+      search_path: "public"
+  
+  target: dev

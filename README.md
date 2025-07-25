@@ -69,7 +69,7 @@ Une plateforme de données complète utilisant une architecture moderne avec orc
 
 ### 1. Démarrage automatique
 ```bash
-./start-platform.sh up
+./setup-pulse-stack.sh up
 ```
 
 ### 2. Démarrage manuel
@@ -144,7 +144,7 @@ docker-compose down -v
 ### Health Checks
 ```bash
 # Vérifier tous les services
-./start-platform.sh
+./setup-pulse-stack.sh status
 
 # Vérifier un service spécifique
 docker-compose exec [service] health_check
@@ -152,6 +152,9 @@ docker-compose exec [service] health_check
 
 ### Logs
 ```bash
+# Vérifier tous les services
+./setup-pulse-stack.sh logs
+
 # Logs en temps réel
 docker-compose logs -f
 

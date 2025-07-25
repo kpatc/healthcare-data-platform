@@ -11,6 +11,9 @@ airflow/logs/
 postgres/data/
 minio/data/
 superset/data/
+superset/.cache/
+superset/.local/
+superset/superset.db
 
 # IDE
 .vscode/

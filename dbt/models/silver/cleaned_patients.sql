@@ -1,7 +1,7 @@
 -- Exemple de modèle Silver: données nettoyées et standardisées
 -- Ce modèle nettoie et standardise les données bronze
 
-{{ config(materialized='table') }}
+{{ config(materialized='table') }};
 
 SELECT 
     id,
@@ -14,4 +14,4 @@ SELECT
     END as patient_status,
     loaded_at
 FROM {{ ref('raw_patients') }}
-WHERE name IS NOT NULL
+WHERE name IS NOT NULL;

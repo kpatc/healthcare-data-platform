@@ -19,6 +19,9 @@ services:
       - HACK_LOCAL_ROOT_PARENT=${HACK_LOCAL_ROOT_PARENT}
     volumes:
       - ${HACK_LOCAL_ROOT_PARENT}:/local_parent
+    networks:
+      - pulse-network
+
 
   db:
     image: airbyte/db:${VERSION}
@@ -30,6 +33,9 @@ services:
       - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
     volumes:
       - db:/var/lib/postgresql/data
+    networks:
+      - pulse-network
+
 
   scheduler:
     image: airbyte/scheduler:${VERSION}
@@ -73,6 +79,9 @@ services:
       - workspace:${WORKSPACE_ROOT}
       - ${LOCAL_ROOT}:${LOCAL_ROOT}
       - data:${CONFIG_ROOT}
+    networks:
+      - pulse-network
+
 
   server:
     image: airbyte/server:${VERSION}
@@ -111,6 +120,9 @@ services:
       - workspace:${WORKSPACE_ROOT}
       - data:${CONFIG_ROOT}
       - ${LOCAL_ROOT}:${LOCAL_ROOT}
+    networks:
+      - pulse-network
+
 
   webapp:
     image: airbyte/webapp:${VERSION}
@@ -129,6 +141,9 @@ services:
       - OPENREPLAY=${OPENREPLAY:-}
       - TRACKING_STRATEGY=${TRACKING_STRATEGY}
       - INTERNAL_API_HOST=${INTERNAL_API_HOST}
+    networks:
+      - pulse-network
+
 
   airbyte-temporal:
     image: temporalio/auto-setup:1.7.0
@@ -147,6 +162,8 @@ services:
       - LOG_LEVEL=${LOG_LEVEL}
     volumes:
       - ./temporal/dynamicconfig:/etc/temporal/config/dynamicconfig
+    networks:
+      - pulse-network
 
 volumes:
   workspace:
@@ -155,3 +172,10 @@ volumes:
     name: ${DATA_DOCKER_MOUNT}
   db:
     name: ${DB_DOCKER_MOUNT}
+
+networks:
+  pulse-network:
+    external:
+      name: pulsestack_pulse-network
+
+  # Ensure the pulse-network is created externally before running this compose file

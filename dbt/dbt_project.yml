@@ -18,28 +18,53 @@ clean-targets:
   - "target"
   - "dbt_packages"
 
+# Variables pour les chemins MinIO
+vars:
+  minio_endpoint: "http://minio:9000"
+  minio_access_key: "minio"
+  minio_secret_key: "minio123"
+  bronze_bucket: "bronze"
+  silver_bucket: "silver"
+  gold_bucket: "gold"
+
 # Configuring models
 models:
   pulse_stack_project:
-    # Config applied to all models
+    # Config applied to all models - stockage principal PostgreSQL
     +materialized: table
+    +database: healthcare
     
-    # Config for the bronze layer (raw data)
+    # Config for the bronze layer (raw data from MinIO)
     bronze:
       +materialized: view
       +schema: bronze
-    
+      +database: healthcare
+      
     # Config for the silver layer (cleaned data)
     silver:
       +materialized: table
       +schema: silver
-    
+      +database: healthcare
+
     # Config for the gold layer (business logic)
     gold:
       +materialized: table
       +schema: gold
+      +database: healthcare
 
 # Seeds configuration
 seeds:
   pulse_stack_project:
     +schema: seeds
+    +database: healthcare
+
+# Tests configuration
+tests:
+  pulse_stack_project:
+    +severity: error
+
+# Snapshots configuration  
+snapshots:
+  pulse_stack_project:
+    +target_schema: snapshots
+    +target_database: healthcare

@@ -74,6 +74,7 @@ services:
       "
 
   # dbt - Data Transformation
+  # dbt - Data Transformation
   dbt:
     image: ghcr.io/dbt-labs/dbt-postgres:1.7.0
     container_name: pulse-dbt
@@ -82,10 +83,12 @@ services:
     working_dir: /usr/app/dbt
     networks:
       - pulse-network
-    command: tail -f /dev/null
+    entrypoint: ["tail", "-f", "/dev/null"]  # Utilise entrypoint au lieu de command
     depends_on:
       pulse-postgres:
         condition: service_healthy
+    environment:
+      - DBT_PROFILES_DIR=/usr/app/dbt
 
   # Great Expectations - Data Quality
   great_expectations:

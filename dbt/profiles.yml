@@ -2,7 +2,7 @@ pulse_stack:
   outputs:
     dev:
       type: postgres
-      host: postgres
+      host: pulse-postgres
       user: admin
       password: admin
       port: 5432
@@ -14,7 +14,7 @@ pulse_stack:
     
     prod:
       type: postgres
-      host: postgres
+      host: pulse-postgres
       user: admin
       password: admin
       port: 5432

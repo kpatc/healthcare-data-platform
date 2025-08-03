@@ -9,7 +9,7 @@ up() {
   
   # Create necessary directories
   echo "📁 Creating directories..."
-  mkdir -p ./dags ./logs ./plugins ./temporal/dynamicconfig
+  mkdir -p ./airflow/dags ./airflow/logs ./airflow/plugins ./airflow/temporal/dynamicconfig
   mkdir -p ./superset ./dbt ./great_expectations ./postgres/init-scripts
   mkdir -p /tmp/airbyte_local
   
@@ -20,7 +20,7 @@ up() {
   # Start Pulse Components (MinIO, PostgreSQL, Superset, dbt, Great Expectations)
   echo ""
   echo "🏥 Starting Pulse Healthcare Components..."
-  docker-compose -f docker-compose-pulse-components.yaml down -v
+  docker-compose -f docker-compose-pulse-components.yaml down 
   docker-compose -f docker-compose-pulse-components.yaml up -d
   
   echo "⏳ Waiting for Pulse components to initialize (30s)..."
@@ -29,7 +29,7 @@ up() {
   # Start Airbyte
   echo ""
   echo "🔄 Starting Airbyte..."
-  docker-compose -f docker-compose-airbyte.yaml down -v
+  docker-compose -f docker-compose-airbyte.yaml down 
   docker-compose -f docker-compose-airbyte.yaml up -d
   
   echo "⏳ Waiting for Airbyte to initialize (60s)..."
@@ -38,7 +38,7 @@ up() {
   # Start Airflow
   echo ""
   echo "🌪️ Starting Airflow..."
-  docker-compose -f docker-compose-airflow.yaml down -v
+  docker-compose -f docker-compose-airflow.yaml down 
   docker-compose -f docker-compose-airflow.yaml up airflow-init
   docker-compose -f docker-compose-airflow.yaml up -d
   
@@ -112,13 +112,13 @@ down() {
   echo "=========================="
   
   echo "Stopping Airflow..."
-  docker-compose -f docker-compose-airflow.yaml down -v
+  docker-compose -f docker-compose-airflow.yaml down 
   
   echo "Stopping Airbyte..."
-  docker-compose -f docker-compose-airbyte.yaml down -v
+  docker-compose -f docker-compose-airbyte.yaml down 
   
   echo "Stopping Pulse Components..."
-  docker-compose -f docker-compose-pulse-components.yaml down -v
+  docker-compose -f docker-compose-pulse-components.yaml down 
   
   echo "✅ Pulse Stack stopped successfully."
 }

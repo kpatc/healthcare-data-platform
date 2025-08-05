@@ -1,102 +1,101 @@
-# Pulse Stack - Plateforme de Données Moderne
+# Pulse Stack - Modern Data Platform
 
-Une plateforme de données complète utilisant une architecture moderne avec orchestration, ingestion, transformation et visualisation.
+A comprehensive data platform using modern architecture with orchestration, ingestion, transformation, and visualization.
 
 ## 🏗️ Architecture
 
-![Architecture Pulse Stack](architecture.png)
+![Pulse Stack Architecture](architecture.png)
 
-## 🚀 Services Inclus
+## 🚀 Included Services
 
-### 📊 **PostgreSQL** - Base de données principale
-- **Port:** 5433 (externe) / 5432 (interne)
-- **Utilisateur:** admin / admin
-- **Bases:** healthcare, airflow, superset, airbyte
-- **Stockage:** Données Silver/Gold (nettoyées et agrégées)
+### 📊 **PostgreSQL** - Main Database
+- **Port:** 5433 (external) / 5432 (internal)
+- **User:** admin / admin
+- **Databases:** healthcare, airflow, superset, airbyte
+- **Storage:** Silver/Gold data (cleaned and aggregated)
 
-### 🪣 **MinIO** - Stockage objet (Data Lake)
+### 🪣 **MinIO** - Object Storage (Data Lake)
 - **Console:** http://localhost:9001
 - **API:** http://localhost:9000
-- **Utilisateur:** minio / minio123
-- **Buckets:** bronze (données brutes uniquement)
+- **User:** minio / minio123
+- **Buckets:** bronze (raw data only)
 - **Formats:** Parquet, JSON, CSV
 
-### 🔄 **Airbyte** - Ingestion de données
+### 🔄 **Airbyte** - Data Ingestion
 - **Interface:** http://localhost:8000
-- **Utilisateur:** airbyte / password
-- Connecteurs pour diverses sources de données
-- Synchronisation batch et temps réel
-- Destination : MinIO (Bronze layer)
+- **User:** airbyte / password
+- Connectors for various data sources
+- Batch and real-time synchronization
+- Destination: MinIO + PostgreSQL (Bronze layer)
 
 ### 🌪️ **Airflow** - Orchestration
 - **Interface:** http://localhost:8080
-- **Utilisateur:** admin / admin
-- Orchestration des pipelines ETL/ELT
-- Monitoring et alertes
-- Déclenche les transformations dbt
+- **User:** admin / admin
+- ETL/ELT pipeline orchestration
+- Monitoring and alerting
+- Triggers dbt transformations
 
-### 🔧 **dbt** - Transformation des données
-- Architecture Medallion (Bronze → Silver → Gold)
-- Source : MinIO (Bronze) → Destination : PostgreSQL (Silver/Gold)
-- Tests de qualité intégrés
-- Documentation automatique
+### 🔧 **dbt** - Data Transformation
+- Medallion Architecture (Bronze → Silver → Gold)
+- Source: PostgreSQL (Bronze) → Destination: PostgreSQL (Silver/Gold)
+- Built-in quality tests
+- Automatic documentation
 
-### ✅ **Great Expectations** - Validation qualité
-- Validation des données automatisée
-- Profiling des schémas PostgreSQL
-- Rapports de qualité des données
-- Intégration avec dbt
+### ✅ **Great Expectations** - Quality Validation
+- Automated data validation
+- PostgreSQL schema profiling
+- Data quality reports
+- dbt integration
 
-### 📈 **Superset** - Visualisation BI
+### 📈 **Superset** - BI Visualization
 - **Interface:** http://localhost:8088
-- **Utilisateur:** admin / admin
-- Dashboards interactifs
-- Source de données : PostgreSQL (Silver/Gold)
-- Exploration de données business-ready
+- **User:** admin / admin
+- Interactive dashboards
+- Data source: PostgreSQL (Silver/Gold)
+- Business-ready data exploration
 
-### 🔴 **Redis** - Cache et file d'attente
-- **Port:** 6379 (interne uniquement)
-- Cache pour Airflow et autres services
-- File d'attente pour les tâches asynchrones
-// ...existing code...
+### 🔴 **Redis** - Cache and Queue
+- **Port:** 6379 (internal only)
+- Cache for Airflow and other services
+- Queue for asynchronous tasks
 
-## 🏃‍♂️ Démarrage Rapide
+## 🏃‍♂️ Quick Start
 
-### Prérequis
-- Docker et Docker Compose installés
-- Au moins 8GB de RAM disponible
-- Ports 5432, 8000, 8080, 8088, 9000, 9001 libres
+### Prerequisites
+- Docker and Docker Compose installed
+- At least 8GB of available RAM
+- Ports 5432, 8000, 8080, 8088, 9000, 9001 available
 
-### 1. Démarrage automatique
+### 1. Automatic Startup
 ```bash
 ./setup-pulse-stack.sh up
 ```
 
-### 2. Démarrage manuel
+### 2. Manual Startup
 ```bash
-# Démarrer tous les services
+# Start all services
 docker-compose up -d
 
-# Vérifier l'état
+# Check status
 docker-compose ps
 
-# Voir les logs
+# View logs
 docker-compose logs -f [service-name]
 ```
 
-### 3. Arrêt
+### 3. Shutdown
 ```bash
-# Arrêter les services
+# Stop services
 docker-compose down
 
-# Nettoyer complètement (⚠️ supprime les données)
+# Complete cleanup (⚠️ deletes data)
 docker-compose down -v
 ```
 
-## 📋 Accès aux Services
+## 📋 Service Access
 
-| Service | URL | Utilisateur | Mot de passe |
-|---------|-----|-------------|--------------|
+| Service | URL | Username | Password |
+|---------|-----|----------|----------|
 | Airflow | http://localhost:8080 | admin | admin |
 | Airbyte | http://localhost:8000 | - | - |
 | Superset | http://localhost:8088 | admin | admin |
@@ -112,100 +111,100 @@ docker-compose down -v
 
 ### dbt
 - Models: `./dbt/models/`
-- Profils: `./dbt/profiles.yml`
+- Profiles: `./dbt/profiles.yml`
 - Configuration: `./dbt/dbt_project.yml`
 
 ### Superset
 - Configuration: `./superset/superset_config.py`
-- Données: `./superset/`
+- Data: `./superset/`
 
 ### Great Expectations
 - Configuration: `./great_expectations/`
 
-## 📊 Architecture Medallion
+## 📊 Medallion Architecture
 
-### 🥉 Bronze Layer (Données Brutes)
-- Stockage: MinIO bucket `bronze`
+### 🥉 Bronze Layer (Raw Data)
+- Storage: MinIO bucket and PostgreSQL (temporary for silver models) `bronze`
 - Format: Parquet, JSON, CSV
-- Rétention: Données brutes non transformées
+- Retention: Untransformed raw data
 
-### 🥈 Silver Layer (Données Nettoyées)
-- Stockage: MinIO bucket `silver` + PostgreSQL
-- Transformations: Nettoyage, déduplication, typage
-- Tests: Validations de qualité de base
+### 🥈 Silver Layer (Cleaned Data)
+- Storage: PostgreSQL
+- Transformations: Cleaning, deduplication, typing
+- Tests: Basic quality validations
 
-### 🥇 Gold Layer (Données Business)
-- Stockage: MinIO bucket `gold` + PostgreSQL
-- Agrégations: Métriques business, KPIs
-- Optimisation: Tables dénormalisées pour analytics
+### 🥇 Gold Layer (Business Data)
+- Storage: PostgreSQL
+- Aggregations: Business metrics, KPIs
+- Optimization: Denormalized tables for analytics
 
-## 🔍 Monitoring et Maintenance
+## 🔍 Monitoring and Maintenance
 
 ### Health Checks
 ```bash
-# Vérifier tous les services
+# Check all services
 ./setup-pulse-stack.sh status
 
-# Vérifier un service spécifique
+# Check specific service
 docker-compose exec [service] health_check
 ```
 
 ### Logs
 ```bash
-# Vérifier tous les services
+# Check all services
 ./setup-pulse-stack.sh logs
 
-# Logs en temps réel
+# Real-time logs
 docker-compose logs -f
 
-# Logs d'un service
+# Service-specific logs
 docker-compose logs -f airflow-webserver
 ```
 
-### Métriques
-- Airflow: Interface web avec métriques DAG
-- PostgreSQL: pg_stat_activity pour monitoring
-- MinIO: Métriques dans l'interface console
+### Metrics
+- Airflow: Web interface with DAG metrics
+- PostgreSQL: pg_stat_activity for monitoring
+- MinIO: Metrics in console interface
 
-## 🛠️ Développement
+## 🛠️ Development
 
-### Ajouter un DAG Airflow
-1. Créer le fichier dans `./airflow/dags/`
-2. Le DAG sera automatiquement détecté
-3. Vérifier dans l'interface Airflow
+### Adding an Airflow DAG
+1. Create file in `./airflow/dags/`
+2. DAG will be automatically detected
+3. Verify in Airflow interface
 
-### Ajouter un modèle dbt
-1. Créer le fichier SQL dans `./dbt/models/`
-2. Exécuter: `docker-compose exec dbt dbt run`
+### Adding a dbt Model
+1. Create SQL file in `./dbt/models/`
+2. Execute: `docker-compose exec dbt dbt run`
 3. Tests: `docker-compose exec dbt dbt test`
 
-### Configurer une source Airbyte
+### Configuring an Airbyte Source
 1. Interface: http://localhost:8000
-2. Créer Source → Destination
-3. Configurer la synchronisation
+2. Create Source → Destination
+3. Configure synchronization
 
-## 🔒 Sécurité
+## 🔒 Security
 
-⚠️ **Configuration de développement uniquement!**
+⚠️ **Development configuration only!**
 
-Pour la production:
-- Changer tous les mots de passe par défaut
-- Utiliser des secrets externes (Vault, etc.)
-- Configurer HTTPS/TLS
-- Mise en place de l'authentification SSO
-- Network policies restrictives
+For production:
+- Change all default passwords
+- Use external secrets (Vault, etc.)
+- Configure HTTPS/TLS
+- Set up SSO authentication
+- Implement restrictive network policies
 
-## 📚 Ressources
+## 📚 Resources
 
-- [Documentation Airflow](https://airflow.apache.org/docs/)
-- [Documentation dbt](https://docs.getdbt.com/)
-- [Documentation Airbyte](https://docs.airbyte.com/)
-- [Documentation Superset](https://superset.apache.org/docs/)
-- [Documentation Great Expectations](https://docs.greatexpectations.io/)
+- [Airflow Documentation](https://airflow.apache.org/docs/)
+- [dbt Documentation](https://docs.getdbt.com/)
+- [Airbyte Documentation](https://docs.airbyte.com/)
+- [Superset Documentation](https://superset.apache.org/docs/)
+- [Great Expectations Documentation](https://docs.greatexpectations.io/)
 
 ## 🤝 Support
 
-Pour des questions ou problèmes:
-1. Vérifier les logs: `docker-compose logs [service]`
-2. Redémarrer le service: `docker-compose restart [service]`
-3. Consulter la documentation du service concerné
+For questions or issues:
+1. Check logs: `docker-compose logs [service]`
+2. Restart service: `docker-compose restart [service]`
+3. Consult relevant service documentation

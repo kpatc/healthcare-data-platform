@@ -9,7 +9,7 @@ up() {
   
   # Create necessary directories
   echo "📁 Creating directories..."
-  mkdir -p ./airflow/dags ./airflow/logs ./airflow/plugins ./airflow/temporal/dynamicconfig
+  mkdir -p ./airflow/dags ./airflow/logs ./airflow/plugins ./temporal/dynamicconfig
   mkdir -p ./superset ./dbt ./great_expectations ./postgres/init-scripts
   mkdir -p /tmp/airbyte_local
   

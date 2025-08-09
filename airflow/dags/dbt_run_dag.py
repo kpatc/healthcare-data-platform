@@ -1,7 +1,7 @@
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.providers.http.operators.http import SimpleHttpOperator
-from airflow.providers.postgres.operators.postgres import PostgresOperator
+from airflow.providers.docker.operators.docker import DockerOperator
 from datetime import datetime, timedelta
 import json
 
@@ -13,7 +13,7 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
 }
 
-# IDs  connections Airbyte (change by your ids)
+# IDs connections Airbyte
 CSV_TO_MINIO_CONNECTION_ID = "084f31d7-e9a0-45e1-94ec-ac45a86e2f83"
 CSV_TO_POSTGRES_CONNECTION_ID = "edb6c2b7-d235-4084-80bd-0dabf1ae267d"
 
@@ -21,71 +21,136 @@ with DAG(
     'daily_data_pipeline',
     default_args=default_args,
     description='Daily data pipeline: Airbyte sync → dbt transformation',
-    schedule_interval='0 1 * * *',  # Run every day at 1 AM
+    schedule_interval='0 1 * * *',
     catchup=False,
     tags=['Daily pipeline', 'monitoring'],
 ) as dag:
 
-    # 1. Sync CSV to MinIO (backup/raw storage)
+    # 1. Sync CSV to MinIO
     sync_csv_to_minio = SimpleHttpOperator(
         task_id='sync_csv_to_minio',
-        http_conn_id='airbyte_api',
+        http_conn_id='airbyte_default',
         endpoint='/api/v1/connections/sync',
         method='POST',
         headers={'Content-Type': 'application/json'},
         data=json.dumps({'connectionId': CSV_TO_MINIO_CONNECTION_ID}),
     )
 
-    # 2. Sync CSV to PostgreSQL (for dbt processing)
+    # 2. Sync CSV to PostgreSQL
     sync_csv_to_postgres = SimpleHttpOperator(
         task_id='sync_csv_to_postgres',
-        http_conn_id='airbyte_api',
+        http_conn_id='airbyte_default',
         endpoint='/api/v1/connections/sync',
         method='POST',
         headers={'Content-Type': 'application/json'},
         data=json.dumps({'connectionId': CSV_TO_POSTGRES_CONNECTION_ID}),
     )
 
-    # 3. Wait for both syncs to complete
+    # 3. Wait for syncs
     wait_for_syncs = BashOperator(
         task_id='wait_for_syncs',
-        bash_command='sleep 300',  # Wait 5 minutes for syncs to complete
+        bash_command='sleep 600',
     )
 
-    # 4. Check if new data exists in PostgreSQL
-    check_new_data = PostgresOperator(
-        task_id='check_new_data',
-        postgres_conn_id='pulse_postgres',
-        sql="""
-        SELECT COUNT(*) FROM bronze._airbyte_raw_patients 
-        WHERE _airbyte_emitted_at >= NOW() - INTERVAL '2 hours';
-        """,
-    )
-
-    # 5. Run dbt silver models
-    dbt_run_silver = BashOperator(
+    # 4. Run dbt silver models
+    dbt_run_silver = DockerOperator(
         task_id='dbt_run_silver',
-        bash_command='docker compose -f docker-compose-pulse-components.yaml exec dbt dbt run --models silver_patients',
+        image='ghcr.io/dbt-labs/dbt-postgres:1.4.0',
+        command='dbt run --models silver_patients',
+        auto_remove=True,
+        docker_url="unix://var/run/docker.sock",
+        network_mode='pulse-stack_pulse-network',
+        mount_tmp_dir=False,
+        mounts=[
+            {
+                'source': '/home/josh/Big Data Projects/Pulse Stack/dbt',
+                'target': '/usr/app',
+                'type': 'bind'
+            },
+            {
+                'source': '/home/josh/Big Data Projects/Pulse Stack/dbt',
+                'target': '/root/.dbt',
+                'type': 'bind'
+            }
+        ],
+        working_dir='/usr/app',
+        environment={'DBT_PROFILES_DIR': '/root/.dbt'}
     )
 
-    # 6. Run dbt gold models
-    dbt_run_gold = BashOperator(
+    # 5. Run dbt gold models
+    dbt_run_gold = DockerOperator(
         task_id='dbt_run_gold',
-        bash_command='docker compose -f docker-compose-pulse-components.yaml exec dbt dbt run --models gold_patient_stats',
+        image='ghcr.io/dbt-labs/dbt-postgres:1.4.0',
+        command='dbt run --models gold_patient_stats',
+        auto_remove=True,
+        docker_url="unix://var/run/docker.sock",
+        network_mode='pulse-stack_pulse-network',
+        mount_tmp_dir=False,
+        mounts=[
+            {
+                'source': '/home/josh/Big Data Projects/Pulse Stack/dbt',
+                'target': '/usr/app',
+                'type': 'bind'
+            },
+            {
+                'source': '/home/josh/Big Data Projects/Pulse Stack/dbt',
+                'target': '/root/.dbt',
+                'type': 'bind'
+            }
+        ],
+        working_dir='/usr/app',
+        environment={'DBT_PROFILES_DIR': '/root/.dbt'}
     )
 
-    # 7. Run dbt tests
-    dbt_test = BashOperator(
+    # 6. Run dbt tests
+    dbt_test = DockerOperator(
         task_id='dbt_test',
-        bash_command='docker compose -f docker-compose-pulse-components.yaml exec dbt dbt test',
+        image='ghcr.io/dbt-labs/dbt-postgres:1.4.0',
+        command='dbt test',
+        auto_remove=True,
+        docker_url="unix://var/run/docker.sock",
+        network_mode='pulse-stack_pulse-network',
+        mount_tmp_dir=False,
+        mounts=[
+            {
+                'source': '/home/josh/Big Data Projects/Pulse Stack/dbt',
+                'target': '/usr/app',
+                'type': 'bind'
+            },
+            {
+                'source': '/home/josh/Big Data Projects/Pulse Stack/dbt',
+                'target': '/root/.dbt',
+                'type': 'bind'
+            }
+        ],
+        working_dir='/usr/app',
+        environment={'DBT_PROFILES_DIR': '/root/.dbt'}
     )
 
-    # 8. Generate dbt docs
-    dbt_docs = BashOperator(
+    # 7. Generate dbt docs
+    dbt_docs = DockerOperator(
         task_id='dbt_docs',
-        bash_command='docker compose -f docker-compose-pulse-components.yaml exec dbt dbt docs generate',
+        image='ghcr.io/dbt-labs/dbt-postgres:1.4.0',
+        command='dbt docs generate',
+        auto_remove=True,
+        docker_url="unix://var/run/docker.sock",
+        network_mode='pulse-stack_pulse-network',
+        mount_tmp_dir=False,
+        mounts=[
+            {
+                'source': '/home/josh/Big Data Projects/Pulse Stack/dbt',
+                'target': '/usr/app',
+                'type': 'bind'
+            },
+            {
+                'source': '/home/josh/Big Data Projects/Pulse Stack/dbt',
+                'target': '/root/.dbt',
+                'type': 'bind'
+            }
+        ],
+        working_dir='/usr/app',
+        environment={'DBT_PROFILES_DIR': '/root/.dbt'}
     )
 
-    # Define task dependencies
-    # Les deux syncs peuvent s'exécuter en parallèle
-    [sync_csv_to_minio, sync_csv_to_postgres] >> wait_for_syncs >> check_new_data >> dbt_run_silver >> dbt_run_gold >> dbt_test >> dbt_docs
+    # Dependencies
+    [sync_csv_to_minio, sync_csv_to_postgres] >> wait_for_syncs >> dbt_run_silver >> dbt_run_gold >> dbt_test >> dbt_docs

@@ -40,15 +40,10 @@
 #                                Default: ''
 #
 # Feel free to modify this file to suit your needs.
----
 version: '3'
 x-airflow-common:
   &airflow-common
-  # In order to add custom dependencies or upgrade provider packages you can use your extended image.
-  # Comment the image line, place your Dockerfile in the directory where you placed the docker-compose.yaml
-  # and uncomment the "build" line below, Then run `docker-compose build` to build the images.
   image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:2.1.3}
-  # build: .
   environment:
     &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
@@ -59,14 +54,17 @@ x-airflow-common:
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__API__AUTH_BACKEND: 'airflow.api.auth.backend.basic_auth'
-    _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
+    _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-apache-airflow-providers-docker}
+
   volumes:
     - ./airflow/dags:/opt/airflow/dags
     - ./airflow/logs:/opt/airflow/logs
     - ./airflow/plugins:/opt/airflow/plugins
+    - /var/run/docker.sock:/var/run/docker.sock
+    
   user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-0}"
   extra_hosts:
-      - "host.docker.internal:host-gateway"
+    - "host.docker.internal:host-gateway"
   depends_on:
     redis:
       condition: service_healthy
@@ -87,6 +85,9 @@ services:
       interval: 5s
       retries: 5
     restart: always
+    networks:
+      - default
+      - pulsestack_pulse-network
 
   redis:
     image: redis:latest
@@ -98,6 +99,9 @@ services:
       timeout: 30s
       retries: 50
     restart: always
+    networks:
+      - default
+      - pulsestack_pulse-network
 
   airflow-webserver:
     <<: *airflow-common
@@ -110,6 +114,11 @@ services:
       timeout: 10s
       retries: 5
     restart: always
+    networks:
+      - default
+      - pulsestack_pulse-network
+    group_add:
+      - "999"  # Docker group
 
   airflow-scheduler:
     <<: *airflow-common
@@ -120,6 +129,11 @@ services:
       timeout: 10s
       retries: 5
     restart: always
+    networks:
+      - default
+      - pulsestack_pulse-network
+    group_add:
+      - "999"  # Docker group
 
   airflow-worker:
     <<: *airflow-common
@@ -132,6 +146,9 @@ services:
       timeout: 10s
       retries: 5
     restart: always
+    networks:
+      - default
+      - pulsestack_pulse-network
 
   airflow-init:
     <<: *airflow-common
@@ -195,6 +212,9 @@ services:
     user: "0:${AIRFLOW_GID:-0}"
     volumes:
       - .:/sources
+    networks:
+      - default
+      - pulsestack_pulse-network
 
   flower:
     <<: *airflow-common
@@ -207,6 +227,13 @@ services:
       timeout: 10s
       retries: 5
     restart: always
+    networks:
+      - default
+      - pulsestack_pulse-network
 
 volumes:
   postgres-db-volume:
+
+networks:
+  pulsestack_pulse-network:
+    external: true

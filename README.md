@@ -50,7 +50,7 @@ A comprehensive data platform using modern architecture with orchestration, inge
 ### 📈 **Superset** - BI Visualization
 - **Interface:** http://localhost:8088
 - **User:** admin / admin
-- Interactive dashboards
+- Interactive dashboards (see [Healthcare Analytics example](Healthcare%20Analytics.png))
 - Data source: PostgreSQL (Silver/Gold)
 - Business-ready data exploration
 
@@ -183,7 +183,26 @@ docker-compose logs -f airflow-webserver
 2. Create Source → Destination
 3. Configure synchronization
 
-// ...existing content...
+// ...existing content après la section Troubleshooting...
+
+## 📈 Superset Dashboards
+
+![Healthcare Analytics Dashboard](Healthcare%20Analytics.png)
+
+### Setup
+1. **Access:** http://localhost:8088 (`admin`/`admin`)
+2. **Connect PostgreSQL:** `pulse-postgres:5432` / `healthcare` / `admin`/`admin`  
+3. **Dataset:** Create from `gold_patient_stats` table
+
+### Build Analytics
+Use available dimensions (age_category, gender, race, health_service_area, discharge_year) and metrics (avg_costs, total_stays, avg_length_of_stay) to create:
+- **KPIs:** Big Numbers, Gauges
+- **Trends:** Line Charts, Area Charts  
+- **Distributions:** Pie Charts, Histograms, Box Plots
+- **Comparisons:** Bar Charts, Heatmaps
+- **Geographic:** Maps (if applicable)
+
+Create interactive dashboards with filters and custom SQL for advanced analytics.
 
 ## 🔄 Airflow Orchestration Setup
 

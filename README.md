@@ -183,8 +183,6 @@ docker-compose logs -f airflow-webserver
 2. Create Source → Destination
 3. Configure synchronization
 
-// ...existing content après la section Troubleshooting...
-
 ## 📈 Superset Dashboards
 
 ![Healthcare Analytics Dashboard](Healthcare%20Analytics.png)

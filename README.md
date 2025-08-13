@@ -183,6 +183,56 @@ docker-compose logs -f airflow-webserver
 2. Create Source → Destination
 3. Configure synchronization
 
+// ...existing content...
+
+## 🔄 Airflow Orchestration Setup
+
+### Connection Configuration
+
+#### 1. Create Airbyte Connection in Airflow
+Navigate to **Admin → Connections → + (Add a new record)** in Airflow UI:
+
+- **Conn Id:** `airbyte_default`
+- **Conn Type:** `airbyte`
+- **Host:** `airbyte-server`
+- **Port:** `8001`
+- **Schema:** (leave empty)
+- **Login:** (leave empty)
+- **Password:** (leave empty)
+- **Extra:** `{}`
+
+
+#### 2. Create PostgreSQL Connection in Airflow
+Navigate to **Admin → Connections → + (Add a new record)** in Airflow UI:
+
+- **Conn Id:** `postgres_default`
+- **Conn Type:** `Postgres`
+- **Host:** `pulse-postgres`
+- **Schema:** `healthcare`
+- **Login:** `admin`
+- **Password:** `admin`
+- **Port:** `5432`
+
+### DAG Configuration
+
+⚠️ **Important:** Update the Airbyte connection IDs in your DAG file `./airflow/dags/dbt_run_dag.py`:
+
+```python
+# Replace these IDs with your actual Airbyte connection IDs
+CSV_TO_MINIO_CONNECTION_ID = "084f31d7-e9a0-45e1-94ec-ac45a86e2f83" # Airbyte connection ID for CSV to MinIO
+CSV_TO_POSTGRES_CONNECTION_ID = "edb6c2b7-d235-4084-80bd-0dabf1ae267d" # Airbyte connection ID for CSV to PostgreSQL
+```
+
+## 🔧 Troubleshooting
+
+### Airflow Issues
+
+**DockerOperator errors:**
+- Check permissions: `ls -la /var/run/docker.sock` (should be 666)
+- Verify network: `docker network inspect pulsestack_pulse-network`
+- Check dbt image: `docker images | grep dbt-postgres`
+
+
 ## 🔒 Security
 
 ⚠️ **Development configuration only!**

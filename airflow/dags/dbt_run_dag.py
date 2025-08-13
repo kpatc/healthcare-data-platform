@@ -2,6 +2,7 @@ from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.providers.http.operators.http import SimpleHttpOperator
 from airflow.providers.docker.operators.docker import DockerOperator
+from docker.types import Mount
 from datetime import datetime, timedelta
 import json
 
@@ -13,8 +14,8 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
 }
 
-CSV_TO_MINIO_CONNECTION_ID = "084f31d7-e9a0-45e1-94ec-ac45a86e2f83"
-CSV_TO_POSTGRES_CONNECTION_ID = "edb6c2b7-d235-4084-80bd-0dabf1ae267d"
+CSV_TO_MINIO_CONNECTION_ID = "084f31d7-e9a0-45e1-94ec-ac45a86e2f83" # Airbyte connection ID for CSV to MinIO
+CSV_TO_POSTGRES_CONNECTION_ID = "edb6c2b7-d235-4084-80bd-0dabf1ae267d" # Airbyte connection ID for CSV to PostgreSQL
 
 with DAG(
     'daily_data_pipeline',
@@ -22,7 +23,7 @@ with DAG(
     description='Daily data pipeline: Airbyte sync → dbt transformation',
     schedule_interval='0 1 * * *',
     catchup=False,
-    tags=['Daily pipeline', 'monitoring'],
+    tags=['Daily pipeline', 'Monitoring'],
 ) as dag:
 
     sync_csv_to_minio = SimpleHttpOperator(
@@ -52,52 +53,61 @@ with DAG(
     dbt_run_silver = DockerOperator(
         task_id='dbt_run_silver',
         image='ghcr.io/dbt-labs/dbt-postgres:1.7.0',  # Même image que votre service
-        command='dbt run --models silver_patients',
+        command='run --models silver_patients',
+        dag=dag,
         auto_remove=True,
         docker_url="unix://var/run/docker.sock",
-        network_mode='pulse-stack_pulse-network',
+        network_mode='pulsestack_pulse-network',  #docker network
         mount_tmp_dir=False,
-        volumes=['/home/josh/Big Data Projects/Pulse Stack/dbt:/usr/app/dbt'],
-        working_dir='/usr/app/dbt',
+        mounts=[
+            Mount(source="/home/josh/Big Data Projects/Pulse Stack/dbt", target="/usr/app/dbt", type="bind")
+        ],
+        # working_dir='/usr/app/dbt',
         environment={'DBT_PROFILES_DIR': '/usr/app/dbt'}
     )
 
     dbt_run_gold = DockerOperator(
         task_id='dbt_run_gold',
         image='ghcr.io/dbt-labs/dbt-postgres:1.7.0',
-        command='dbt run --models gold_patient_stats',
+        command='run --models gold_patient_stats',
+        dag=dag,
         auto_remove=True,
         docker_url="unix://var/run/docker.sock",
-        network_mode='pulse-stack_pulse-network',
+        network_mode='pulsestack_pulse-network', #docker network
         mount_tmp_dir=False,
-        volumes=['/home/josh/Big Data Projects/Pulse Stack/dbt:/usr/app/dbt'],
-        working_dir='/usr/app/dbt',
+        mounts=[
+            Mount(source="/home/josh/Big Data Projects/Pulse Stack/dbt", target="/usr/app/dbt", type="bind")
+        ],
         environment={'DBT_PROFILES_DIR': '/usr/app/dbt'}
     )
 
     dbt_test = DockerOperator(
         task_id='dbt_test',
         image='ghcr.io/dbt-labs/dbt-postgres:1.7.0',
-        command='dbt test',
+        command='test',
+        dag=dag,
         auto_remove=True,
         docker_url="unix://var/run/docker.sock",
-        network_mode='pulse-stack_pulse-network',
+        network_mode='pulsestack_pulse-network', #docker network
         mount_tmp_dir=False,
-        volumes=['/home/josh/Big Data Projects/Pulse Stack/dbt:/usr/app/dbt'],
-        working_dir='/usr/app/dbt',
+        mounts=[
+            Mount(source="/home/josh/Big Data Projects/Pulse Stack/dbt", target="/usr/app/dbt", type="bind")
+        ],
         environment={'DBT_PROFILES_DIR': '/usr/app/dbt'}
     )
 
     dbt_docs = DockerOperator(
         task_id='dbt_docs',
         image='ghcr.io/dbt-labs/dbt-postgres:1.7.0',
-        command='dbt docs generate',
+        command='docs generate',
+        dag=dag,
         auto_remove=True,
         docker_url="unix://var/run/docker.sock",
-        network_mode='pulse-stack_pulse-network',
+        network_mode='pulsestack_pulse-network',
         mount_tmp_dir=False,
-        volumes=['/home/josh/Big Data Projects/Pulse Stack/dbt:/usr/app/dbt'],
-        working_dir='/usr/app/dbt',
+        mounts=[
+            Mount(source="/home/josh/Big Data Projects/Pulse Stack/dbt", target="/usr/app/dbt", type="bind")
+        ],
         environment={'DBT_PROFILES_DIR': '/usr/app/dbt'}
     )
 
